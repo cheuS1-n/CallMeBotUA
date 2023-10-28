@@ -1,0 +1,7 @@
+TOKEN:
+mysql_ip: localhost
+mysql_port: 3306
+mysql_user: TestUser
+mysql_password: testpass
+mysql_general_database: Bot
+# Change to your MySQL Data and bot token

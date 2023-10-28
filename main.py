@@ -1,19 +1,42 @@
-
+# IMPORTS
+import logging
+import yaml
 from telegram import *
-from telegram import Chat, ChatMember, ChatMemberUpdated, Update, Message
-from telegram.constants import ParseMode
-from telegram.ext import (
-    Application,
-    ChatMemberHandler,
-    CommandHandler,
-    ContextTypes,
-    MessageHandler,
-    filters,
+from telegram.ext import *
+
+# Another python files imports
+from MySQL_Driver import *
+###
+
+# IMPORT CONFIGS
+with open('config.yaml', 'r') as file:
+    token = yaml.safe_load(file)
+    token = token['TOKEN']
+
+###
+
+# LOGGER SETTINGS
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.INFO
 )
+logging.getLogger("httpx").setLevel(logging.WARNING)
+
+
+###
 
 
 
+if __name__ == '__main__':
+    if startdbs():
+        application = ApplicationBuilder().token(token).build()
 
+        start_handler = CommandHandler('sql', start)
+        application.add_handler(start_handler)
+
+        application.run_polling()
+
+    closedbs()
 
 
 

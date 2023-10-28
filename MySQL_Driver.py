@@ -31,7 +31,7 @@ DB2 = mysql.connector.connect(
     port=MySQLPORT,
     user=MySQLUSER,
     password=MySQLPASS,
-    database= "Constanta")
+    database="Constanta")
 
 
 def startdbs():
@@ -68,6 +68,8 @@ def closedbs():
     else:
         logger_mysql.info("База данних сталих значень відключена!")
     return True
+
+
 def sendSQL(sql):
     cursor = DB.cursor()
     try:
@@ -81,8 +83,6 @@ def executeSQL(sql):
     try:
         cursor.execute(sql)
     except:
-        logger.exception(f"Виникла помилка в функції sendSQL. DEBUG:\nSQL: {sql}")
+        logger.exception(f"Виникла помилка в функції executeSQL. DEBUG:\nSQL: {sql}")
     else:
         return cursor
-
-
