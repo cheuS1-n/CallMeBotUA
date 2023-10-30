@@ -26,12 +26,6 @@ DB = mysql.connector.connect(
     user=MySQLUSER,
     password=MySQLPASS,
     database=MySQLDATABASE)
-DB2 = mysql.connector.connect(
-    host=MySQLHOST,
-    port=MySQLPORT,
-    user=MySQLUSER,
-    password=MySQLPASS,
-    database="Constanta")
 
 
 def startdbs():
@@ -42,13 +36,6 @@ def startdbs():
         return False
     else:
         logger_mysql.info("Основна база данних підключена!")
-    try:
-        DB2.connect()
-    except Exception as e:
-        logger.error(f"Помилка при підключенні бази данних сталих значень\nВиключення: {e}")
-        return False
-    else:
-        logger_mysql.info("База данних сталих значень підключена!")
     return True
 
 
@@ -60,14 +47,6 @@ def closedbs():
         return False
     else:
         logger_mysql.info("Основна база данних відключена!")
-    try:
-        DB2.connect()
-    except Exception as e:
-        logger.error(f"Помилка при відключенні бази данних сталих значень\nВиключення: {e}")
-        return False
-    else:
-        logger_mysql.info("База данних сталих значень відключена!")
-    return True
 
 
 def sendSQL(sql):
@@ -82,7 +61,14 @@ def executeSQL(sql):
     cursor = DB.cursor()
     try:
         cursor.execute(sql)
-    except:
-        logger.exception(f"Виникла помилка в функції executeSQL. DEBUG:\nSQL: {sql}")
+    except Exception as e:
+        logger.exception(f"Виникла помилка в функції executeSQL. DEBUG:\nSQL: {sql}\nException: {e}")
     else:
         return cursor
+
+
+def DBCommit():
+    try:
+        DB.commit()
+    except Exception as e:
+        logger.exception(f"Виникла помилка в функції DBCommit. DEBUG:\nException: {e}")
