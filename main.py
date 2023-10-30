@@ -26,6 +26,8 @@ logging.basicConfig(
     level=logging.INFO
 )
 logging.getLogger("httpx").setLevel(logging.WARNING)
+
+
 ###
 
 # DEFs
@@ -47,6 +49,24 @@ async def test(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not update.effective_user.id == 1459969627:
         return
     ParseUserSettings(update.effective_user.id)
+
+
+
+async def start_private_chat(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    user_name = update.effective_user.full_name
+    chat = update.effective_chat
+    if chat.type != Chat.PRIVATE:
+        return
+
+    await update.effective_message.reply_text(
+        f'Привіт {user_name}. Я бот під назвою "Поклич мене", як ти розумієш з назви я допомагаю кликати в чат '
+        f'користувачів, але саме тоді коли їм зручно!\n'
+        f'Введи /help щоб дізнатись команди, або /info щоб дізнатись додаткову інформацію\n'
+        f'Вся детальна інформація по командам і усьому іншому в моїй Wiki ⬇️',
+        reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton(text='Wiki', url='https://github.com/cheuS1-n/CallMeBotUA/wiki/%D0%94%D0%BE%D0%BC'
+                                                   '%D1%96%D0%B2%D0%BA%D0%B0')]
+        ]))
 
 
 async def Register(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -74,7 +94,8 @@ async def Register(update: Update, context: ContextTypes.DEFAULT_TYPE):
                                  "Вам допоможе!")
     elif MV > 0:
         await msg.reply_text(
-            "Ви вже зареєстровані в цьому каналі! Для мого налаштування надішліть мені /settings в **приватні повідомлення.**",parse_mode=telegram.constants.ParseMode.MARKDOWN)
+            "Ви вже зареєстровані в цьому каналі! Для мого налаштування надішліть мені /settings в **приватні повідомлення.**",
+            parse_mode=telegram.constants.ParseMode.MARKDOWN)
 
 
 async def Profile(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -138,7 +159,8 @@ async def Settings(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f'4. Режим "Не турбувати": (В розробці)\n'
         f'Інформація по налаштуванням: [Тут](https://github.com/cheuS1-n/CallMeBotUA/wiki/%D0%9A%D0%BE%D0%BC%D0%B0%D0%BD%D0%B4%D0%B8#%D1%80%D0%BE%D0%B7%D0%B1%D1%96%D1%80-%D0%BE%D0%BF%D1%86%D1%96%D0%B9)'
     )
-    await update.effective_message.reply_text(text, parse_mode=telegram.constants.ParseMode.MARKDOWN, disable_web_page_preview=True)
+    await update.effective_message.reply_text(text, parse_mode=telegram.constants.ParseMode.MARKDOWN,
+                                              disable_web_page_preview=True)
 
 
 async def Ping(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -187,7 +209,8 @@ async def Ping(update: Update, context: ContextTypes.DEFAULT_TYPE):
             continue
     if len(PINGLIST) == 0:
         await update.effective_message.reply_text(
-            "На жаль, список на пінг пустий[2].Для детальнішої інформації, прочитайте [Wiki(ЧаПи)](https://github.com/cheuS1-n/CallMeBotUA/wiki/%D0%A7%D0%B0%D0%9F%D0%B8)", parse_mode=telegram.constants.ParseMode.MARKDOWN, disable_web_page_preview=True)
+            "На жаль, список на пінг пустий[2].Для детальнішої інформації, прочитайте [Wiki(ЧаПи)](https://github.com/cheuS1-n/CallMeBotUA/wiki/%D0%A7%D0%B0%D0%9F%D0%B8)",
+            parse_mode=telegram.constants.ParseMode.MARKDOWN, disable_web_page_preview=True)
         return
     await update.effective_message.reply_text(' '.join(PINGLIST))
     print(PINGLIST)
@@ -220,7 +243,8 @@ async def Help(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "```/rtime```\n"
         'Для детальнішої інформації по командам, прочитайте [Wiki](https://github.com/cheuS1-n/CallMeBotUA/wiki/%D0%9A%D0%BE%D0%BC%D0%B0%D0%BD%D0%B4%D0%B8#rtime)'
     )
-    await update.effective_message.reply_text(text, parse_mode=telegram.constants.ParseMode.MARKDOWN, disable_web_page_preview=True)
+    await update.effective_message.reply_text(text, parse_mode=telegram.constants.ParseMode.MARKDOWN,
+                                              disable_web_page_preview=True)
 
 
 async def AllUsersInChannel(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -289,7 +313,8 @@ async def ChangeRT(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if len(update.effective_message.text.split(" ")) <= 1:
         await update.effective_message.reply_text("Приклад введення команди: /rtime ЧасВСекундах | [Інформація]("
                                                   "https://github.com/cheuS1-n/CallMeBotUA/wiki/%D0%9A%D0%BE%D0%BC%D0%B0%D0%BD%D0%B4%D0%B8#rtime)",
-                                                  parse_mode=telegram.constants.ParseMode.MARKDOWN, disable_web_page_preview=True)
+                                                  parse_mode=telegram.constants.ParseMode.MARKDOWN,
+                                                  disable_web_page_preview=True)
     info = ParseUserSettings(update.effective_user.id)
     args = int(update.effective_message.text.split(" ")[1])
     print(f"ARGS: {args}")
@@ -301,6 +326,20 @@ async def ChangeRT(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def Updater(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if len(update.effective_message.new_chat_members) != 0:
+        for member in update.effective_message.new_chat_members:
+            print(f"MEMBERU: {member.username} CBG: {context.bot.username}")
+            if member.username == context.bot.username:
+                await update.effective_chat.send_message(
+                    'Всім привіт, тепер я буду кликати всіх саме тоді, коли їм буде зручно!\n'
+                    'Щоб я почав Вас кликати, будь ласка, зареєструйтесь - /reg\n'
+                    'Налаштуйте мене під свої потреби, перевірити свої налаштування - /settings\n'
+                    '*Вся інформація по використанню команд та моєму налаштуванню є в Wiki*',
+                    reply_markup=InlineKeyboardMarkup([
+                        [InlineKeyboardButton(text='Wiki',
+                                              url='https://github.com/cheuS1-n/CallMeBotUA/wiki/%D0'
+                                                  '%94%D0%BE%D0%BC%D1%96%D0%B2%D0%BA%D0%B0')],
+                    ]), parse_mode=telegram.constants.ParseMode.MARKDOWN)
     UNick = update.effective_user.username
     UID = update.effective_user.id
     CID = update.effective_chat.id
@@ -339,7 +378,9 @@ if __name__ == '__main__':
         application.add_handler(CommandHandler('userlist', AllUsersInChannel))
         application.add_handler(CommandHandler('help', Help))
         application.add_handler(CommandHandler('rtime', ChangeRT))
+        application.add_handler(CommandHandler('start', start_private_chat))
         application.add_handler(MessageHandler(filters.ALL, Updater))
+
 
         application.run_polling()
 
