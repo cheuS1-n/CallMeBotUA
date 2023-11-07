@@ -2,6 +2,7 @@
 # IMPORTS
 import datetime
 import logging
+import time as t
 
 import telegram
 import yaml
@@ -49,7 +50,6 @@ async def test(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not update.effective_user.id == 1459969627:
         return
     ParseUserSettings(update.effective_user.id)
-
 
 
 async def start_private_chat(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -173,6 +173,9 @@ async def Ping(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.effective_message.reply_text(
             "На жаль, список на пінг пустий. Для детальнішої інформації прочитайте Wiki - /info")
     PINGLIST = []
+    PRINTLIST = []
+    MV = 0
+    GMV = 0
     print(f"RTM:")
     for x in info:
         settings = ParseUserSettings(x[1])[0]
@@ -212,7 +215,35 @@ async def Ping(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "На жаль, список на пінг пустий[2].Для детальнішої інформації, прочитайте [Wiki(ЧаПи)](https://github.com/cheuS1-n/CallMeBotUA/wiki/%D0%A7%D0%B0%D0%9F%D0%B8)",
             parse_mode=telegram.constants.ParseMode.MARKDOWN, disable_web_page_preview=True)
         return
-    await update.effective_message.reply_text(' '.join(PINGLIST))
+    MV = 0
+    GMV = 0
+    LZ = 0
+    for x in range(len(PINGLIST)):
+
+        print(f"MV: {MV}")
+        if len(PINGLIST) == 0:
+            print("PINGNULL")
+            break
+        PRINTLIST.extend([f"{PINGLIST[MV]}"])
+        MV = MV + 1
+        GMV = GMV + 1
+        if (MV % 4) == 0:
+            print("SENDMSG MV%")
+            await update.effective_chat.send_message(' '.join(PRINTLIST))
+            PRINTLIST.clear()
+        elif (MV % 4) > 0:
+            print("MV%>0")
+            if (len(PINGLIST) - MV) <= 4:
+                print("<4")
+                for x in range(len(PINGLIST) - MV):
+                    PRINTLIST.extend([f"{PINGLIST[MV]}"])
+                    MV = MV + 1
+                await update.effective_chat.send_message(' '.join(PRINTLIST))
+                break
+
+        print(f"{MV % 4} |||")
+        t.sleep(0.2)
+
     print(PINGLIST)
 
 
@@ -221,7 +252,7 @@ async def Info(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "Інформація про бота та інше.\n"
         'Бот "Поклич мене" є вашим помічником, він буде кликати Вас саме тоді, коли зручно Вам!(буде, коли дороблю '
         'налаштування :) )\n'
-        'Версія: 0.1 (Бета тест)\n'
+        'Версія: 0.4 (Ранній реліз)\n'
         "Власник: @Quality2Length",
         reply_markup=InlineKeyboardMarkup([
             [InlineKeyboardButton(text='Wiki',
@@ -241,10 +272,14 @@ async def Help(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "```/userlist```\n"
         "```/cs```\n"
         "```/rtime```\n"
-        'Для детальнішої інформації по командам, прочитайте [Wiki](https://github.com/cheuS1-n/CallMeBotUA/wiki/%D0%9A%D0%BE%D0%BC%D0%B0%D0%BD%D0%B4%D0%B8#rtime)'
+        'Для детальнішої інформації по командам, прочитайте Wiki'
     )
     await update.effective_message.reply_text(text, parse_mode=telegram.constants.ParseMode.MARKDOWN,
-                                              disable_web_page_preview=True)
+                                              disable_web_page_preview=True,
+                                              reply_markup=InlineKeyboardMarkup([
+                                                  [InlineKeyboardButton(text='Wiki',
+                                                                        url='https://github.com/cheuS1-n/CallMeBotUA/wiki/%D0%9A%D0%BE%D0%BC%D0%B0%D0%BD%D0%B4%D0%B8')],
+                                              ]))
 
 
 async def AllUsersInChannel(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -380,7 +415,6 @@ if __name__ == '__main__':
         application.add_handler(CommandHandler('rtime', ChangeRT))
         application.add_handler(CommandHandler('start', start_private_chat))
         application.add_handler(MessageHandler(filters.ALL, Updater))
-
 
         application.run_polling()
 
