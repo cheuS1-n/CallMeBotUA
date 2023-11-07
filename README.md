@@ -7,6 +7,6 @@
 
 # Запуск:
 Налаштувати все потрібне в config.yaml.
-Встановити залежності: `pip3 install -r requirements.txt`
 
+Встановити залежності: `pip3 install -r requirements.txt`
 Команда запуску: `python3 main.py`
