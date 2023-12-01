@@ -2,6 +2,7 @@
 # IMPORTS
 import datetime
 import logging
+import threading
 import time as t
 
 import telegram
@@ -27,7 +28,7 @@ logging.basicConfig(
     level=logging.INFO
 )
 logging.getLogger("httpx").setLevel(logging.WARNING)
-
+loggerm = logging.getLogger("CM")
 
 ###
 
@@ -86,12 +87,23 @@ async def Register(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if x[0] == UID:
             MV = MV + 1
     if MV == 0:
-        if AddNewProfile(CID, UID, UNick):
-            await msg.reply_text("Ви успішно зареєстровані! Надішліть /settings в приватні повідомлення для "
-                                 "налаштування.")
-        else:
-            await msg.reply_text("Помилка реєстрації! Будь ласка, зверніться до @Quality2Length \nВін залюбки зі всім "
-                                 "Вам допоможе!")
+        if update.effective_user.username is None:
+            if AddNewProfile(CID, UID, f"!{RBS(update.effective_user.first_name)}"):
+                loggerm.info(
+                    f"Added new user to DB:\nChannelID: {CID}, ChannelName: {update.effective_chat.title}, UserID: {UID}, UserFLName: {update.effective_user.full_name}\nAlternative method.")
+                await update.effective_message.reply_text("Ви успішно зареєстровані! Надішліть /settings в приватні повідомлення для налаштування.")
+                return
+            else:
+                loggerm.warning(
+                    "DONT ADDED new user to DB:\nChannelID: {CID}, ChannelName: {update.effective_chat.title}, UserID: {UID}, UserFLName: {update.effective_user.full_name}\nAlternative method.")
+                await msg.reply_text(
+                    "Помилка реєстрації! Будь ласка, зверніться до @Quality2Length \nВін залюбки зі всім Вам допоможе!")
+                return
+        AddNewProfile(CID, UID, UNick)
+        loggerm.info(
+            f"Added new user to DB:\nChannelID: {CID}, ChannelName: {update.effective_chat.title}, UserID: {UID}, UserNickname: {UNick}")
+        await update.effective_message.reply_text("Ви успішно зареєстровані! Надішліть /settings в приватні повідомлення для налаштування.")
+        return
     elif MV > 0:
         await msg.reply_text(
             "Ви вже зареєстровані в цьому каналі! Для мого налаштування надішліть мені /settings в **приватні повідомлення.**",
@@ -171,17 +183,17 @@ async def Ping(update: Update, context: ContextTypes.DEFAULT_TYPE):
     info = ParseAllUsers(CID)
     if len(info) == 0:
         await update.effective_message.reply_text(
-            "На жаль, список на пінг пустий. Для детальнішої інформації прочитайте Wiki - /info")
+            "Відсутні зареєстровані користувачі. Щоб зареєструвати для пінгу - /reg")
     PINGLIST = []
     PRINTLIST = []
-    MV = 0
-    GMV = 0
+    APINGLIST = []
     print(f"RTM:")
     for x in info:
         settings = ParseUserSettings(x[1])[0]
         print(f"X: {x}")
         RT = settings[3]
-        ct = datetime.today().strftime("%H:%M:%S")
+        ct = datetime.today()
+        ct1 = datetime.today().strftime("%d/%m/%y %H:%M:%S.%f")
 
         print(f"SETTINGS: {settings}")
 
@@ -189,44 +201,54 @@ async def Ping(update: Update, context: ContextTypes.DEFAULT_TYPE):
             print("+")
             if x[3] is None:
                 print("+N")
-                LPTSettings(x[0], x[1], ct)
-                PINGLIST.extend([f"@{x[2]}"])
+                LPTSettings(x[0], x[1], ct1)
+                if x[2].startswith("!"):
+                    nick = x[2].replace("!", "")
+                    id = x[1]
+                    APINGLIST.extend([f"[{nick}](tg://user?id={id})"])
+                    print("ADDED")
+                else:
+                    PINGLIST.extend([f"@{x[2]}"])
+                    print("ADDED")
                 continue
             else:
                 print("+NN")
-                dif2 = datetime.strptime(x[3], "%H:%M:%S") + timedelta(seconds=RT)
-                dif2 = dif2.strftime("%H:%M:%S")
-                dif = TTS(dif2, ct)
-                print(f"DIF: {dif}")
+                dif2 = datetime.strptime(x[3], "%d/%m/%y %H:%M:%S.%f") + timedelta(seconds=RT)
+                dif = dtTTS(ct, dif2)
+                print(f"DIF: {dif} | DIF2: {dif2}")
                 if dif >= 0:
                     print("+>0")
                     continue
                 elif dif < 0:
                     print("+<0")
-                    LPTSettings(x[0], x[1], ct)
-                    PINGLIST.extend([f"@{x[2]}"])
+                    LPTSettings(x[0], x[1], ct1)
+                    if x[2].startswith("!"):
+                        nick = x[2].replace("!", "")
+                        id = x[1]
+                        APINGLIST.extend([f"[{nick}](tg://user?id={id})"])
+                        print("ADDED")
+                    else:
+                        PINGLIST.extend([f"@{x[2]}"])
+                        print("ADDED")
+                    print("ADDED")
                     continue
 
         elif int(settings[1]) == 0:
             print("settings0 return")
             continue
-    if len(PINGLIST) == 0:
+    if len(PINGLIST) == 0 and len(APINGLIST) == 0:
         await update.effective_message.reply_text(
             "На жаль, список на пінг пустий[2].Для детальнішої інформації, прочитайте [Wiki(ЧаПи)](https://github.com/cheuS1-n/CallMeBotUA/wiki/%D0%A7%D0%B0%D0%9F%D0%B8)",
             parse_mode=telegram.constants.ParseMode.MARKDOWN, disable_web_page_preview=True)
         return
     MV = 0
-    GMV = 0
-    LZ = 0
     for x in range(len(PINGLIST)):
-
         print(f"MV: {MV}")
         if len(PINGLIST) == 0:
             print("PINGNULL")
             break
         PRINTLIST.extend([f"{PINGLIST[MV]}"])
         MV = MV + 1
-        GMV = GMV + 1
         if (MV % 4) == 0:
             print("SENDMSG MV%")
             await update.effective_chat.send_message(' '.join(PRINTLIST))
@@ -242,7 +264,31 @@ async def Ping(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 break
 
         print(f"{MV % 4} |||")
-        t.sleep(0.2)
+
+    PINGLIST.clear()
+    PRINTLIST.clear()
+    MV = 0
+    print(f"LENA: {len(APINGLIST)} | {APINGLIST}")
+    if not len(APINGLIST) == 0:
+        print(f"APL: {APINGLIST}")
+        for x in APINGLIST:
+            PRINTLIST.extend([f"{APINGLIST[MV]}"])
+            MV = MV + 1
+            if (MV % 4) == 0:
+                print("ASENDMSG MV%")
+                await update.effective_chat.send_message(' '.join(PRINTLIST),
+                                                         parse_mode=telegram.constants.ParseMode.MARKDOWN)
+                PRINTLIST.clear()
+            elif (MV % 4) > 0:
+                print("AMV%>0")
+                if (len(PINGLIST) - MV) <= 4:
+                    print("<4A")
+                    for x in range(len(PINGLIST) - MV):
+                        PRINTLIST.extend([f"{PINGLIST[MV]}"])
+                        MV = MV + 1
+                    await update.effective_chat.send_message(' '.join(PRINTLIST),
+                                                             parse_mode=telegram.constants.ParseMode.MARKDOWN)
+                    break
 
     print(PINGLIST)
 
@@ -253,11 +299,14 @@ async def Info(update: Update, context: ContextTypes.DEFAULT_TYPE):
         'Бот "Поклич мене" є вашим помічником, він буде кликати Вас саме тоді, коли зручно Вам!(буде, коли дороблю '
         'налаштування :) )\n'
         'Версія: 0.4 (Ранній реліз)\n'
-        "Власник: @Quality2Length",
+        "Власник: @Quality2Length\n"
+        'В бота "Поклич мене!" є також Lite версія(@CallMeBotUALite_bot), попробуйте і її.\n',
         reply_markup=InlineKeyboardMarkup([
             [InlineKeyboardButton(text='Wiki',
                                   url='https://github.com/cheuS1-n/CallMeBotUA/wiki/%D0%94%D0%BE%D0%BC%D1%96%D0%B2%D0%BA%D0%B0')],
             [InlineKeyboardButton(text='Github', url='https://github.com/cheuS1-n/CallMeBotUA/')],
+            [InlineKeyboardButton(text='Різниця між Lite і простою версією',
+                                  url='https://github.com/cheuS1-n/CallMeBotUA/wiki/%D0%A0%D1%96%D0%B7%D0%BD%D0%B8%D1%86%D1%8F-%D0%BC%D1%96%D0%B6-%D0%B7%D0%B2%D0%B8%D1%87%D0%B0%D0%B9%D0%BD%D0%BE%D1%8E-%D1%82%D0%B0-Lite-%D0%B2%D0%B5%D1%80%D1%81%D1%96%D1%94%D1%8E.')],
         ])
     )
 
@@ -379,12 +428,30 @@ async def Updater(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     UID = update.effective_user.id
     CID = update.effective_chat.id
     info = ParseUserInfoC(UID, CID)
+
     print(UID)
     print(CID)
     print(info)
     if len(info) == 0:
         print("LEN 0")
         return
+
+    if update.effective_user.username is None:
+        print("NONE")
+
+        if str(info[0][2]) == str(f"!{RBS(update.effective_user.first_name)}"):
+            loggerm.info(
+                f"Update not need, nicks are indentical\nChannelID: {CID}, ChannelName: {update.effective_chat.title}, UserID: {UID}, UserFLName: {update.effective_user.full_name}\n Alternative method")
+            return
+        else:
+            if ChangeNick(update.effective_user.id, f"!{RBS(update.effective_user.first_name)}"):
+                loggerm.info(
+                    f"NICK CHANGED!\nChannelID: {CID}, ChannelName: {update.effective_chat.title}, UserID: {UID}, UserFLName: {update.effective_user.full_name}, OldNickName: {info[0][2]}\nAlternative method.")
+                return
+            else:
+                logger.warning(
+                    f"NICKS DONT CHANGED, CHANGE ERROR!\nChannelID: {CID}, ChannelName: {update.effective_chat.title}, UserID: {UID}, UserFLName: {update.effective_user.full_name}, OldNickName: {info[0][2]}\nAlternative method.")
+                return
     if str(info[0][2]) == str(UNick):
         print("Update not need, nicks are indentical")
         return
@@ -395,27 +462,27 @@ async def Updater(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     else:
         print("Nick Dont changed")
 
+def START():
+    while True:
+        if startdbs():
+            application = ApplicationBuilder().token(token).build()
 
-if __name__ == '__main__':
-    if startdbs():
-        application = ApplicationBuilder().token(token).build()
+            start_handler = CommandHandler('sql', sqltest)
+            testh = CommandHandler('test', test)
+            application.add_handler(start_handler)
+            application.add_handler(testh)
+            application.add_handler(CommandHandler('reg', Register))
+            application.add_handler(CommandHandler('profile', Profile))
+            application.add_handler(CommandHandler('cs', ChangeState))
+            application.add_handler(CommandHandler('settings', Settings))
+            application.add_handler(CommandHandler('ping', Ping))
+            application.add_handler(CommandHandler('info', Info))
+            application.add_handler(CommandHandler('userlist', AllUsersInChannel))
+            application.add_handler(CommandHandler('help', Help))
+            application.add_handler(CommandHandler('rtime', ChangeRT))
+            application.add_handler(CommandHandler('start', start_private_chat))
+            application.add_handler(MessageHandler(filters.ALL, Updater))
 
-        start_handler = CommandHandler('sql', sqltest)
-        testh = CommandHandler('test', test)
-        application.add_handler(start_handler)
-        application.add_handler(testh)
-        application.add_handler(CommandHandler('reg', Register))
-        application.add_handler(CommandHandler('profile', Profile))
-        application.add_handler(CommandHandler('cs', ChangeState))
-        application.add_handler(CommandHandler('settings', Settings))
-        application.add_handler(CommandHandler('ping', Ping))
-        application.add_handler(CommandHandler('info', Info))
-        application.add_handler(CommandHandler('userlist', AllUsersInChannel))
-        application.add_handler(CommandHandler('help', Help))
-        application.add_handler(CommandHandler('rtime', ChangeRT))
-        application.add_handler(CommandHandler('start', start_private_chat))
-        application.add_handler(MessageHandler(filters.ALL, Updater))
+            application.run_polling()
 
-        application.run_polling()
-
-    closedbs()
+START()

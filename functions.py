@@ -167,6 +167,8 @@ def DNDMTSettings(UID, param):
         DBCommit()
     print(f"DNDMTSettings: {info}")
     return True
+
+
 def LPTSettings(CID, UID, param):
     try:
         info = sendSQL(f"UPDATE Main SET LastPingTime='{param}' WHERE UserID={UID} AND ChannelID={CID}")
@@ -179,6 +181,7 @@ def LPTSettings(CID, UID, param):
     print(f"LPTSettings: {info}")
     return True
 
+
 def TTS(T1, T2):
     t1 = T1.split(":")
     t2 = T2.split(":")
@@ -189,8 +192,23 @@ def TTS(T1, T2):
     H2 = int(t2[0])
     M2 = int(t2[1])
     S2 = int(t2[2])
-    alls1 = (((H1*60)*60)+(M1*60)+S1)
-    alls2 = (((H2*60)*60)+(M2*60)+S2)
-    return alls1-alls2
+    alls1 = (((H1 * 60) * 60) + (M1 * 60) + S1)
+    alls2 = (((H2 * 60) * 60) + (M2 * 60) + S2)
+    return alls1 - alls2
 
 
+def dtTTS(T1: datetime, T2: datetime):
+    dif1 = T2 - T1
+    dif = timedelta.total_seconds(dif1)
+    return int(dif)
+
+
+def RBS(Nick: str):
+    BS = ['"', "'", '`', '*']
+    n = Nick
+    for x in BS:
+        print(f"{x}")
+        if x in n:
+            print("YES")
+            n = n.replace(f"{x}", "")
+    return str(n)
