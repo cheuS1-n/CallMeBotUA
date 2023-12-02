@@ -165,9 +165,9 @@ async def Settings(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     text = (
         f"Налашування користувача {update.effective_user.username}\n"
-        f"1. Стан: {ST}\n"
+        f"1. Стан: {ST} | /cs \n"
         f"2. Діапазон часу пінгу: (В розробці)\n"
-        f"3. Час затримки пінгу: {RT} \n"
+        f"3. Час затримки пінгу: {RT} | /rtime \n"
         f'4. Режим "Не турбувати": (В розробці)\n'
         f'Інформація по налаштуванням: [Тут](https://github.com/cheuS1-n/CallMeBotUA/wiki/%D0%9A%D0%BE%D0%BC%D0%B0%D0%BD%D0%B4%D0%B8#%D1%80%D0%BE%D0%B7%D0%B1%D1%96%D1%80-%D0%BE%D0%BF%D1%86%D1%96%D0%B9)'
     )
