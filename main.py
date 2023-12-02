@@ -399,6 +399,13 @@ async def ChangeRT(update: Update, context: ContextTypes.DEFAULT_TYPE):
                                                   "https://github.com/cheuS1-n/CallMeBotUA/wiki/%D0%9A%D0%BE%D0%BC%D0%B0%D0%BD%D0%B4%D0%B8#rtime)",
                                                   parse_mode=telegram.constants.ParseMode.MARKDOWN,
                                                   disable_web_page_preview=True)
+
+    if int(update.effective_message.text.split(" ")[1]) > 18000:
+        await update.effective_message.reply_text("Ви не можете поставити час затримки більше 5 годин - 18000 секунд.")
+        return
+    if int(update.effective_message.text.split(" ")[1]) < 0:
+        await update.effective_message.reply_text("Ви не можете поставити від'ємний час. Час має бути більшим/рівним нулю.")
+        return
     info = ParseUserSettings(update.effective_user.id)
     args = int(update.effective_message.text.split(" ")[1])
     print(f"ARGS: {args}")
