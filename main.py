@@ -184,6 +184,7 @@ async def Ping(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if len(info) == 0:
         await update.effective_message.reply_text(
             "Відсутні зареєстровані користувачі. Щоб зареєструвати для пінгу - /reg")
+        return
     PINGLIST = []
     PRINTLIST = []
     APINGLIST = []
